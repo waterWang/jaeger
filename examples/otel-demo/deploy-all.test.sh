@@ -126,5 +126,62 @@ wait-for-deployment opensearch opensearch-dashboards 600s"
   assertEquals "$expected" "$output"
 }
 
+testRendersCollectorStartupProbeInValues() {
+  local values_file
+  values_file="$(dirname "$SCRIPT")/otel-demo-values.yaml"
+
+  assertTrue "otel-demo-values.yaml must exist" "[ -f '$values_file' ]"
+
+  # Verify startupProbe section exists with correct httpGet
+  grep -q "startupProbe:" "$values_file"
+  assertEquals "startupProbe must be defined in values" 0 $?
+
+  grep -q "port: 13133" "$values_file"
+  assertEquals "startupProbe must target health check port 13133" 0 $?
+
+  grep -q "path: /" "$values_file"
+  assertEquals "startupProbe must use HTTP GET path /" 0 $?
+
+  grep -q "periodSeconds: 10" "$values_file"
+  assertEquals "startupProbe periodSeconds must be 10" 0 $?
+
+  grep -q "timeoutSeconds: 1" "$values_file"
+  assertEquals "startupProbe timeoutSeconds must be 1" 0 $?
+
+  grep -q "failureThreshold: 30" "$values_file"
+  assertEquals "startupProbe failureThreshold must be 30" 0 $?
+}
+
+testRendersCollectorStartupProbeViaHelmTemplate() {
+  if ! command -v helm >/dev/null 2>&1; then
+    echo "  SKIP: helm not available"
+    return 0
+  fi
+
+  local chart_version
+  local values_file
+  chart_version=$(bash -c 'source "$1"; printf "%s" "$OTEL_DEMO_CHART_VERSION"' _ "$SCRIPT")
+  values_file="$(dirname "$SCRIPT")/otel-demo-values.yaml"
+
+  helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts >/dev/null 2>&1 || true
+  helm repo update >/dev/null 2>&1 || true
+
+  local rendered
+  rendered=$(helm template otel-demo open-telemetry/opentelemetry-demo \
+    --version "$chart_version" \
+    -f "$values_file" 2>/dev/null)
+
+  assertContains "$rendered" "startupProbe:"
+  assertContains "$rendered" "port: 13133"
+  assertContains "$rendered" "path: /"
+  assertContains "$rendered" "periodSeconds: 10"
+  assertContains "$rendered" "timeoutSeconds: 1"
+  assertContains "$rendered" "failureThreshold: 30"
+
+  # Verify liveness and readiness probes from the chart defaults are still present
+  assertContains "$rendered" "livenessProbe:"
+  assertContains "$rendered" "readinessProbe:"
+}
+
 # shellcheck disable=SC1091
 source "${SHUNIT2}/shunit2"
