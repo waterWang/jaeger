@@ -203,3 +203,11 @@ opentelemetry-collector:
           receivers: [otlp]
           processors: [memory_limiter, k8sattributes, resource, batch]
           exporters: [otlp/jaeger]
+
+  startupProbe:
+    httpGet:
+      port: 13133
+      path: /
+    periodSeconds: 10
+    timeoutSeconds: 1
+    failureThreshold: 30
