@@ -355,7 +355,7 @@ def test_execute_tool_truncates_oversized_result_on_span_only(
     # The full, untruncated payload still reaches the AG-UI wire.
     assert result == huge_output
     completed_update = conn.session_updates[-1]
-    assert completed_update.raw_output == {"content": huge_output}
+    assert completed_update.raw_output == huge_output
 
     # Only the span attribute is capped, to protect OTLP export from
     # arbitrarily large tool payloads.
