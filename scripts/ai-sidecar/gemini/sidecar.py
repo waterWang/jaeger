@@ -306,7 +306,7 @@ class JaegerSidecarAgent(Agent):
                         tool_call_id,
                         status="completed",
                         content=[tool_content(text_block(output_text))],
-                        raw_output=tool_output,
+                        raw_output={"content": tool_output},
                     ),
                 )
 
@@ -537,3 +537,4 @@ async def handle_websocket(websocket: Any, agent_factory: Callable[[], Agent] | 
             await asyncio.gather(*lingering, return_exceptions=True)
 
         logger.info("Websocket connection closed")
+
