@@ -61,9 +61,10 @@ func (h *readSkillHandler) handle(
 		content += fmt.Sprintf("\n\nfile content truncated after %d bytes\n", h.maxFileSize)
 	}
 
-	return &mcp.CallToolResult{
-		Content: []mcp.Content{&mcp.TextContent{Text: content}},
-	}, types.ReadSkillOutput{Instructions: content}, nil
+	// Return a nil *mcp.CallToolResult; the MCP SDK populates the wire
+	// Content from the typed output, matching the other eight handlers and
+	// avoiding a hand-written duplicate of the skill body on the wire.
+	return nil, types.ReadSkillOutput{Instructions: content}, nil
 }
 
 // open routes p to the custom tree when it names the custom/ prefix and to the
