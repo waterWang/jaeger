@@ -85,15 +85,15 @@ func TestReadSkillHandler_FileTooLarge(t *testing.T) {
 	assert.Contains(t, output.Instructions, "truncated after")
 }
 
-func TestReadSkillHandler_RawTextInContent(t *testing.T) {
+func TestReadSkillHandler_ReturnsNilResult(t *testing.T) {
 	h := newTestHandler()
 	result, output, err := h.handle(context.Background(), &mcp.CallToolRequest{}, types.ReadSkillInput{Path: "SKILL.md"})
 	require.NoError(t, err)
-	require.NotNil(t, result)
-	tc, ok := result.Content[0].(*mcp.TextContent)
-	require.True(t, ok)
-	assert.Contains(t, tc.Text, "# Skills")
-	assert.Equal(t, tc.Text, output.Instructions)
+	// The handler returns a nil *mcp.CallToolResult; the MCP SDK populates the
+	// wire Content from the typed output, so the skill body is not duplicated
+	// by hand. The body is still fully available via the typed output.
+	assert.Nil(t, result)
+	assert.Contains(t, output.Instructions, "# Skills")
 }
 
 func TestNewReadSkillHandler(t *testing.T) {
